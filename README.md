@@ -32,9 +32,10 @@ Our implementation is based on the ghOSt system. This folder contains the conten
   - `function_trace/`, this folder contains the Fibonacci function, a CPU utilization monitor script, and a script for generating the Fibonacci function according to the Azure FaaS trace.
   - `log/`, this folder contains all the experiment logs and graphs.
   - `utils/`, this folder contains serveral analysis scripts, including plotting, counting preemption, calculating response time and cost, etc.
+  - `serverless_workload_generator/`, the code for generating the workload according to the Azure FaaS pattern.
 - `schedulers/`
   - ghOSt schedulers.
-  - `short_cfs/`, Our hybrid scheduler
+  - `hybrid/`, Our hybrid scheduler
 
 ---
 
@@ -74,4 +75,4 @@ for i in /sys/fs/ghost/enclave_*/ctl; do echo destroy > $i; done
 
 ---
 ### Our Workloads
-Our workloads is generated from the [Microsoft Azure Functions Trace 2019](https://github.com/Azure/AzurePublicDataset/blob/master/AzureFunctionsDataset2019.md). More details could be found [here](https://github.com/ZhaoNeil/serverless_workload_generator).
+Our workloads is generated from the [Microsoft Azure Functions Trace 2019](https://github.com/Azure/AzurePublicDataset/blob/master/AzureFunctionsDataset2019.md). More details could be found in `serverless_workload_generator` folder.
