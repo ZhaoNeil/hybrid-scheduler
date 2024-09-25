@@ -1,0 +1,11 @@
+/bazel-bin
+/bazel-ghost-userspace
+/bazel-out
+/bazel-hybrid-scheduler
+/bazel-testlogs
+/.vscode
+*.pyc
+/project/function_trace/trace.txt
+*.out
+*.bazel
+*.lock

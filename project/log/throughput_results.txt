@@ -1,0 +1,6 @@
+IAT sum is: 119.92141453831042 s
+CFS 0-9 time elapsed: 929.1102964878082 s
+CFS 0-19 time elapsed: 521.679927110672 s
+CFS 0-29 time elapsed: 349.154559135437 s
+CFS 0-39 time elapsed: 289.9591636657715 s
+CFS 0-49 time elapsed: 282.99188899993896 s

@@ -1,0 +1,20 @@
+Runtime for arg 29 is 8.038439750671387 ms
+Runtime for arg 30 is 11.13598108291626 ms
+Runtime for arg 31 is 13.24425458908081 ms
+Runtime for arg 32 is 15.171635150909424 ms
+Runtime for arg 33 is 16.708862781524658 ms
+Runtime for arg 34 is 23.48588466644287 ms
+Runtime for arg 35 is 34.19287443161011 ms
+Runtime for arg 36 is 55.68159580230713 ms
+Runtime for arg 37 is 81.42719984054565 ms
+Runtime for arg 38 is 125.47263145446777 ms
+Runtime for arg 39 is 209.01755094528198 ms
+Runtime for arg 40 is 214.8784065246582 ms
+Runtime for arg 41 is 353.94704580307007 ms
+Runtime for arg 42 is 532.6651358604431 ms
+Runtime for arg 43 is 933.6729121208191 ms
+Runtime for arg 44 is 1392.6212167739868 ms
+Runtime for arg 45 is 2456.6296219825745 ms
+Runtime for arg 46 is 3653.3122539520264 ms
+dur_list = [8, 11, 13, 15, 17, 23, 34, 56, 81, 125, 209, 215, 354, 533, 934, 1393, 2457, 3653]
+fib = [29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46]
