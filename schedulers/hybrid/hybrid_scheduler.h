@@ -159,11 +159,9 @@ class HybridScheduler : public BasicDispatchScheduler<ShortQueueTask> {
     std::atomic<bool> debug_runqueue_{false};
 
     int CountAllTasks() {
-        std::cout << "Long queue size: " << long_queue_.RunqueueSize()
-                  << std::endl;
         std::cout << "Short queue size: " << short_queue_.RunqueueSize()
                   << std::endl;
-        return long_queue_.RunqueueSize() + short_queue_.RunqueueSize();
+        return short_queue_.RunqueueSize();
     }
 
     int32_t GetGlobalCPUId() {
@@ -280,7 +278,6 @@ class HybridScheduler : public BasicDispatchScheduler<ShortQueueTask> {
     mutable absl::Mutex mu_;
 
     ShortQueueRq short_queue_;
-    CfsGlobalRq long_queue_;
     std::vector<ShortQueueTask*> yielding_tasks_;
     uint64_t iterations_ = 0;
 
