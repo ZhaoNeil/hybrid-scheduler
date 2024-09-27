@@ -129,10 +129,8 @@ void HybridScheduler::TaskNew(ShortQueueTask* task, const Message& msg) {
     const Gtid gtid(payload->gtid);
     if (payload->runnable) {
         task->run_state = ShortQueueTaskState::kRunnable;
-        short_queue_.Enqueue(task);
+        short_queue_.Enqueue(task);  // enqueue the task to the short queue
     } else {
-        // Wait until task becomes runnable to avoid race between migration
-        // and MSG_TASK_WAKEUP showing up on the default channel.
     }
 
     num_tasks_.fetch_add(1, std::memory_order_relaxed);
