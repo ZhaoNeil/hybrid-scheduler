@@ -1,6 +1,8 @@
 //  These codes are used to implement the Hybrid Scheduler class, the backbones
-//  of the code are from the Ghost project. The Hybrid Scheduler is a
-//  combination of the FIFO and the CFS policies.
+//  of the code are from the ghOSt project. The Hybrid Scheduler is a
+//  combination of the FIFO and the CFS policies. The FIFO and CFS policies are
+//  based on the implementation of the ghOSt project. More details can be found
+//  in schedulers/fifo and schedulers/cfs.
 
 #include "schedulers/hybrid/hybrid_scheduler.h"
 
@@ -598,7 +600,7 @@ void HybridScheduler::TaskNewToCfs(ShortQueueTask* task, CfsTask* cfsTask,
     task->new_to_cfs.store(false, std::memory_order_relaxed);
 }
 
-// handle the CFS task done
+// handle the CFS task done, from ghOSt CFS
 void HybridScheduler::HandleTaskDone(CfsTask* task, bool from_switchto) {
     ABSL_NO_THREAD_SAFETY_ANALYSIS {
         CfsCpuState* cs = cfs_cpu_state_of(task);
@@ -839,7 +841,7 @@ void HybridScheduler::ShortQueueSchedule(const StatusWord& agent_sw,
     }
 }
 
-// CFSScheduler
+// We select the CPU in a round-robin fashion
 Cpu HybridScheduler::SelectTaskRq(CfsTask* task) {
     static auto begin = long_cpulist_.begin();
     static auto end = long_cpulist_.end();
@@ -864,7 +866,7 @@ Cpu HybridScheduler::SelectTaskRq(CfsTask* task) {
     return currentCpu;
 }
 
-// CFS put the previous task to the run queue
+// put the previous task to the run queue, from ghOSt CFS
 void HybridScheduler::PutPrevTask() {
     CfsCpuState* cs = &cfs_cpu_states_[MyCpu()];
     cs->run_queue.mu_.AssertHeld();
@@ -883,7 +885,7 @@ void HybridScheduler::PutPrevTask() {
     }
 }
 
-// migrate the tasks from the migration queue to the run queue
+// migrate the tasks from the migration queue to the run queue, from ghOSt CFS
 void HybridScheduler::StartMigrateTask(CfsTask* task) {
     CfsCpuState* cs = cfs_cpu_state_of(task);
     cs->run_queue.mu_.AssertHeld();
@@ -906,7 +908,7 @@ void HybridScheduler::StartMigrateTask(CfsCpuState* cs) {
     }
 }
 
-// CFS pick the next task
+// NewIdleBalance, from ghOSt CFS
 inline CfsTask* HybridScheduler::NewIdleBalance(CfsCpuState* cs) {
     int load_balanced = LoadBalance(cs, CpuIdleType::kCpuNewlyIdle);
     if (load_balanced <= 0) {
@@ -917,7 +919,7 @@ inline CfsTask* HybridScheduler::NewIdleBalance(CfsCpuState* cs) {
     return cs->run_queue.PickNextTask(nullptr, cfs_allocator_.get(), cs);
 }
 
-// CFS attach the tasks
+// attach the tasks, from ghOSt CFS
 inline void HybridScheduler::AttachTasks(struct LoadBalanceEnv& env) {
     absl::MutexLock l(&env.dst_cs->run_queue.mu_);
 
@@ -925,7 +927,7 @@ inline void HybridScheduler::AttachTasks(struct LoadBalanceEnv& env) {
     env.imbalance -= env.tasks.size();
 }
 
-// CFS detach the tasks
+// detach the tasks, from ghOSt CFS
 inline int HybridScheduler::DetachTasks(struct LoadBalanceEnv& env) {
     absl::MutexLock l(&env.src_cs->run_queue.mu_);
 
@@ -934,7 +936,7 @@ inline int HybridScheduler::DetachTasks(struct LoadBalanceEnv& env) {
     return env.tasks.size();
 }
 
-// CFS calculate the imbalance
+// calculate the imbalance, from ghOSt CFS
 inline int HybridScheduler::CalculateImbalance(LoadBalanceEnv& env) {
     // Migrate up to half the tasks src_cpu has more then dst_cpu.
     int src_tasks = env.src_cs->run_queue.LocklessSize();
@@ -951,7 +953,7 @@ inline int HybridScheduler::CalculateImbalance(LoadBalanceEnv& env) {
     return env.imbalance;
 }
 
-// CFS find the busiest queue
+// find the busiest queue, from ghOSt CFS
 inline int HybridScheduler::FindBusiestQueue() {
     int busiest_runnable_nr = 0;
     int busiest_cpu = 0;
@@ -967,7 +969,7 @@ inline int HybridScheduler::FindBusiestQueue() {
     return busiest_cpu;
 }
 
-// CFS check if we should balance
+// check if we should balance, from ghOSt CFS
 inline bool HybridScheduler::ShouldWeBalance(LoadBalanceEnv& env) {
     // Allow any newly idle CPU to do the newly idle load balance.
     if (env.idle == CpuIdleType::kCpuNewlyIdle) {
@@ -989,7 +991,7 @@ inline bool HybridScheduler::ShouldWeBalance(LoadBalanceEnv& env) {
     return dst_cpu == MyCpu();
 }
 
-// CFS Load Balance method
+// load Balance method, from ghOSt CFS
 inline int HybridScheduler::LoadBalance(CfsCpuState* cs,
                                         CpuIdleType idle_type) {
     struct LoadBalanceEnv env;
@@ -1026,7 +1028,7 @@ void HybridScheduler::PingCpu(const Cpu& cpu) {
     }
 }
 
-// migrate the task to another cpu when adapting the cpu list
+// migrate the task to another cpu when adapting the cpu list, from ghOSt CFS
 bool HybridScheduler::Migrate(CfsTask* task, Cpu cpu, BarrierToken seqnum) {
     CfsCpuState* cs = cfs_cpu_state(cpu);
     {
@@ -1043,7 +1045,7 @@ bool HybridScheduler::Migrate(CfsTask* task, Cpu cpu, BarrierToken seqnum) {
     return true;
 }
 
-// migrate the task to another cpu when adapting the cpu list
+// migrate the task to another cpu when adapting the cpu list, from ghOSt CFS
 void HybridScheduler::MigrateTasks(CfsCpuState* cs) {
     // In MigrateTasks, this agent iterates over the tasks in the migration
     // queue and removes tasks whose migrations succeed. If a task fails to

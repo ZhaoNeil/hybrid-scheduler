@@ -1,6 +1,8 @@
 //  These codes are used to implement the Hybrid Scheduler class, the backbones
-//  of the code are from the Ghost project. The Hybrid Scheduler is a
-//  combination of the FIFO and the CFS policies.
+//  of the code are from the ghOSt project. The Hybrid Scheduler is a
+//  combination of the FIFO and the CFS policies. The FIFO and CFS policies are
+//  based on the implementation of the ghOSt project. More details can be found
+//  in schedulers/fifo and schedulers/cfs.
 
 #ifndef GHOST_SCHEDULERS_HYBRID_HYBRID_SCHEDULER_H
 #define GHOST_SCHEDULERS_HYBRID_HYBRID_SCHEDULER_H
