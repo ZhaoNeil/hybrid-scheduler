@@ -18,39 +18,6 @@
 
 namespace ghost {
 
-class CircularBuffer {
-   private:
-    std::vector<bool> buffer;
-    size_t head = 0;
-    size_t count = 0;
-    size_t capacity;
-    int trueCount = 0;
-
-   public:
-    CircularBuffer(size_t size) : capacity(size), buffer(size, false) {}
-
-    void push(bool value) {
-        // if head is true, we need replace head with value, so decreses
-        // trueCount
-        if (buffer[head]) {
-            trueCount--;
-        }
-        buffer[head] = value;
-        if (value) {
-            trueCount++;
-        }
-        head = (head + 1) % capacity;  // move head to next position
-
-        if (count < capacity) {
-            count++;
-        }
-    }
-
-    int countTrue() const { return trueCount; }
-    int size() const { return count; }
-    bool bufferIsFull() const { return count == capacity && head == 0; }
-};
-
 enum class ShortQueueTaskState {
     kBlocked,   // not on runqueue.
     kRunnable,  // transitory state:
@@ -210,7 +177,6 @@ class HybridScheduler : public BasicDispatchScheduler<ShortQueueTask> {
     void AdaptPreemptionByDuration();
     uint32_t sliding_window_size_ = 100;
     uint32_t duration_window_size_ = 100;
-    CircularBuffer ifFinishInTime{100};
     int sampling_num = 10;
 
     uint32_t GetShortQueueSize() { return short_queue_.RunqueueSize(); }
@@ -327,7 +293,6 @@ class HybridScheduler : public BasicDispatchScheduler<ShortQueueTask> {
 
     CfsCpuState cfs_cpu_states_[MAX_CPUS];
     std::unique_ptr<TaskAllocator<CfsTask>> cfs_allocator_;
-    bool idle_load_balancing_;
 
     inline CfsTask* NewIdleBalance(CfsCpuState* cs);
 
@@ -348,13 +313,6 @@ class HybridScheduler : public BasicDispatchScheduler<ShortQueueTask> {
         CpuIdleType idle;
     };
 
-    int LoadBalance(CfsCpuState* cs, CpuIdleType idle_type);
-    inline void AttachTasks(struct LoadBalanceEnv& env);
-    inline int DetachTasks(struct LoadBalanceEnv& env);
-    inline int CalculateImbalance(LoadBalanceEnv& env);
-    inline int FindBusiestQueue();
-    inline bool ShouldWeBalance(LoadBalanceEnv& env);
-    void PutPrevTask();
     void StartMigrateTask(CfsTask* task);
     void StartMigrateTask(CfsCpuState* cs);
     Cpu SelectTaskRq(CfsTask* task);

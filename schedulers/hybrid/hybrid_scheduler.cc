@@ -800,10 +800,6 @@ void HybridScheduler::ShortQueueSchedule(const StatusWord& agent_sw,
             cs->run_queue.PickNextTask(prev, cfs_allocator_.get(), cs);
         cs->run_queue.mu_.Unlock();
 
-        if (!next && idle_load_balancing_) {
-            next = NewIdleBalance(cs);
-        }
-
         cs->current = next;
 
         if (next) {
@@ -866,25 +862,6 @@ Cpu HybridScheduler::SelectTaskRq(CfsTask* task) {
     return currentCpu;
 }
 
-// put the previous task to the run queue, from ghOSt CFS
-void HybridScheduler::PutPrevTask() {
-    CfsCpuState* cs = &cfs_cpu_states_[MyCpu()];
-    cs->run_queue.mu_.AssertHeld();
-
-    CfsTask* task = cs->current;
-    cs->current = nullptr;
-
-    task->task_state.SetState(CfsTaskState::State::kRunnable);
-
-    // Task affinity no longer allows this CPU to run the task. We should
-    // migrate this task.
-    if (!task->cpu_affinity.IsSet(task->cpu)) {
-        StartMigrateTask(task);
-    } else {  // Otherwise just add the task into this CPU's run queue.
-        cs->run_queue.PutPrevTask(task);
-    }
-}
-
 // migrate the tasks from the migration queue to the run queue, from ghOSt CFS
 void HybridScheduler::StartMigrateTask(CfsTask* task) {
     CfsCpuState* cs = cfs_cpu_state_of(task);
@@ -906,119 +883,6 @@ void HybridScheduler::StartMigrateTask(CfsCpuState* cs) {
         task->task_state.SetOnRq(CfsTaskState::OnRq::kMigrating);
         cs->migration_queue.EnqueueTask(task);
     }
-}
-
-// NewIdleBalance, from ghOSt CFS
-inline CfsTask* HybridScheduler::NewIdleBalance(CfsCpuState* cs) {
-    int load_balanced = LoadBalance(cs, CpuIdleType::kCpuNewlyIdle);
-    if (load_balanced <= 0) {
-        return nullptr;
-    }
-
-    absl::MutexLock lock(&cs->run_queue.mu_);
-    return cs->run_queue.PickNextTask(nullptr, cfs_allocator_.get(), cs);
-}
-
-// attach the tasks, from ghOSt CFS
-inline void HybridScheduler::AttachTasks(struct LoadBalanceEnv& env) {
-    absl::MutexLock l(&env.dst_cs->run_queue.mu_);
-
-    env.dst_cs->run_queue.AttachTasks(env.tasks);
-    env.imbalance -= env.tasks.size();
-}
-
-// detach the tasks, from ghOSt CFS
-inline int HybridScheduler::DetachTasks(struct LoadBalanceEnv& env) {
-    absl::MutexLock l(&env.src_cs->run_queue.mu_);
-
-    env.src_cs->run_queue.DetachTasks(env.dst_cs, env.imbalance, env.tasks);
-
-    return env.tasks.size();
-}
-
-// calculate the imbalance, from ghOSt CFS
-inline int HybridScheduler::CalculateImbalance(LoadBalanceEnv& env) {
-    // Migrate up to half the tasks src_cpu has more then dst_cpu.
-    int src_tasks = env.src_cs->run_queue.LocklessSize();
-    int dst_tasks = env.dst_cs->run_queue.LocklessSize();
-    int excess = src_tasks - dst_tasks;
-
-    env.imbalance = 0;
-    if (excess >= 2) {
-        env.imbalance =
-            std::min(kMaxTasksToLoadBalance, static_cast<size_t>(excess / 2));
-        env.tasks.reserve(env.imbalance);
-    }
-
-    return env.imbalance;
-}
-
-// find the busiest queue, from ghOSt CFS
-inline int HybridScheduler::FindBusiestQueue() {
-    int busiest_runnable_nr = 0;
-    int busiest_cpu = 0;
-    for (const Cpu& cpu : GetLongCPUList()) {
-        int src_cpu_runnable_nr = cfs_cpu_state(cpu)->run_queue.LocklessSize();
-
-        if (src_cpu_runnable_nr <= busiest_runnable_nr) continue;
-
-        busiest_runnable_nr = src_cpu_runnable_nr;
-        busiest_cpu = cpu.id();
-    }
-
-    return busiest_cpu;
-}
-
-// check if we should balance, from ghOSt CFS
-inline bool HybridScheduler::ShouldWeBalance(LoadBalanceEnv& env) {
-    // Allow any newly idle CPU to do the newly idle load balance.
-    if (env.idle == CpuIdleType::kCpuNewlyIdle) {
-        return env.dst_cs->LocklessRqEmpty();
-    }
-    CpuList long_cpulist = GetLongCPUList();
-
-    // Load balance runs from the first idle CPU or if there are no idle
-    // CPUs then the first CPU in the enclave.
-    int dst_cpu = long_cpulist.Front().id();
-    for (const Cpu& cpu : long_cpulist) {
-        CfsCpuState* dst_cs = cfs_cpu_state(cpu);
-        if (dst_cs->LocklessRqEmpty()) {
-            dst_cpu = cpu.id();
-            break;
-        }
-    }
-
-    return dst_cpu == MyCpu();
-}
-
-// load Balance method, from ghOSt CFS
-inline int HybridScheduler::LoadBalance(CfsCpuState* cs,
-                                        CpuIdleType idle_type) {
-    struct LoadBalanceEnv env;
-    int my_cpu = MyCpu();
-
-    env.idle = idle_type;
-    env.dst_cs = &cfs_cpu_states_[my_cpu];
-    if (!ShouldWeBalance(env)) {
-        return 0;
-    }
-
-    int busiest_cpu = FindBusiestQueue();
-    if (busiest_cpu == my_cpu) {
-        return 0;
-    }
-
-    env.src_cs = &cfs_cpu_states_[busiest_cpu];
-    if (!CalculateImbalance(env)) {
-        return 0;
-    }
-
-    int moved_tasks_cnt = DetachTasks(env);
-    if (moved_tasks_cnt) {
-        AttachTasks(env);
-    }
-
-    return moved_tasks_cnt;
 }
 
 void HybridScheduler::PingCpu(const Cpu& cpu) {
