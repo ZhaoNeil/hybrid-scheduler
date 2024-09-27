@@ -1,5 +1,5 @@
 # Hybrid Scheduler
-This repository contains the artifacts of paper [In Serverless, OS Scheduler Choice Costs Money: A Hybrid Scheduling Approach for Cheaper FaaS](), which was accepted at Middleware 2024.
+This repository contains the artifacts of paper [In Serverless, OS Scheduler Choice Costs Money: A Hybrid Scheduling Approach for Cheaper FaaS](), which was accepted at Middleware 2024. With comments and questions related to this repository, please contact: Yuxuan Zhao (y.zhao@liacs.leidenuniv.nl)
 
 This repository is forked from: [ghost-userspace](https://github.com/google/ghost-userspace/commit/d4ddad4c307f2b34ee5e807e791072de29482bbe) and this README adapts from its.
 
