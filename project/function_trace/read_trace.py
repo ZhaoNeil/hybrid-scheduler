@@ -26,7 +26,7 @@ async def main(outputfile):
     tasks = []
     # Read trace file
     with open(
-        "/home/yuxuan/ghost-userspace/project/function_trace/trace.txt", "r"
+        "/home/yuxuan/hybrid-scheduler/project/function_trace/trace.txt", "r"
     ) as f:
         start = time.time()
         lines = f.readlines()
@@ -52,7 +52,7 @@ async def main_firecracker(outputfile):
     tasks = []
     # Read trace file
     with open(
-        "/home/yuxuan/ghost-userspace/project/function_trace/trace.txt", "r"
+        "/home/yuxuan/hybrid-scheduler/project/function_trace/trace.txt", "r"
     ) as f:
         start = time.time()
         lines = f.readlines()
